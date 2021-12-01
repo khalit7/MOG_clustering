@@ -33,10 +33,10 @@ X_full = np.zeros((len(f1), 2))
 #########################################
 # Write your code here
 # Store f1 in the first column of X_full, and f2 in the second column of X_full
-
+X_full[0:,0] += f1
+X_full[0:,1] += f2 
 ########################################/
 X_full = X_full.astype(np.float32)
-
 # you can use the p_id variable, to store the ID of the chosen phoneme that will be used (e.g. phoneme 1, or phoneme 2)
 p_id = 1
 
@@ -50,7 +50,7 @@ p_id = 1
 
 # Create array containing only samples that belong to phoneme 1
 X_phoneme_1 = np.zeros((np.sum(phoneme_id==1), 2))
-# X_phoneme = ...
+X_phoneme_1 = X_full[np.where(phoneme_id==1)]
 
 ########################################
 

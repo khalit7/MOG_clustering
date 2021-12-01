@@ -18,6 +18,9 @@ def plot_data(X, title_string, ax):
     ax.scatter(X[:,0], X[:,1], c='black', marker='.', label=title_string)
     # add legend to the subplot
     ax.legend()
+
+    # plt.xlim([200,1200])
+    # plt.ylim([500,3500])
     
     # Pause for a short time, to allow the plotted points to be shown in the figure
     plt.pause(0.001)
