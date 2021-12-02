@@ -32,16 +32,17 @@ X_full = np.zeros((len(f1), 2))
 #########################################
 # Write your code here
 # Store f1 in the first column of X_full, and f2 in the second column of X_full
-
+X_full[0:,0] += f1
+X_full[0:,1] += f2 
 ########################################/
 X_full = X_full.astype(np.float32)
 
 # We will train a GMM with k components, on a selected phoneme id which is stored in variable "p_id" 
 
 # number of GMM components
-k = 3
+k = 6
 # you can use the p_id variable, to store the ID of the chosen phoneme that will be used (e.g. phoneme 1, or phoneme 2)
-p_id = 1
+p_id = 2
 
 #########################################
 # Write your code here
@@ -50,8 +51,8 @@ p_id = 1
 # The shape of X_phoneme will be two-dimensional. Each row will represent a sample of the dataset, and each column will represent a feature (e.g. f1 or f2)
 # Fill X_phoneme with the samples of X_full that belong to the chosen phoneme
 # To fill X_phoneme, you can leverage the phoneme_id array, that contains the ID of each sample of X_full
-
-# X_phoneme = ...
+X_phoneme = np.zeros((np.sum(phoneme_id==p_id), 2))
+X_phoneme = X_full[np.where(phoneme_id==p_id)]
 
 ########################################/
 
