@@ -129,15 +129,15 @@ for t in range(n_iter):
         #########################################
         # Write your code here
         # Suggest ways of overcoming the singularity
-        # First suggestion: let the covaraince matrix be a diagonal matrix with values sigma (all elements along the diagonal have the same value)
-        '''sigma_square = np.sum(term_1.transpose()@term_1)/N #scaler
-        s[i,:,:] = np.sqrt(sigma_square)*np.identity(D)'''
+        # First suggestion: let the covaraince matrix be a diagonal matrix with values sigma (all elements along the diagonal have the same value which is the sum of all variances)
+        # sigma_square = np.sum(np.square(term_1))/N #scaler. this is a "not very obvious" way of calculating the sigma^2 using the equation in the lecture slides. However, it produces the same result and its faster to compute (since it is a vectorized implementation)
+        # s[i,:,:] = np.sqrt(sigma_square)*np.identity(D)
         # Second suggestion : let the covariance matrix be a diagonal matrix with different sigma values
-        '''sigma_square = np.sum(np.square(term_1),axis=1) # has shape (D,)
-        sigma_diag = np.diag(np.sqrt(sigma_square))
-        s[i,:,:] = sigma_diag'''
+        # sigma_square = np.sum(np.square(term_1),axis=1) # has shape (D,)
+        # sigma_diag = np.diag(np.sqrt(sigma_square))
+        # s[i,:,:] = sigma_diag
         # Third suggestion: add a smal positive value to the diagonal of the covariance matrix
-        '''s[i,:,:]+= 0.000001*np.identity(D)'''
+        s[i,:,:]+= 1000*np.identity(D)
         ########################################/
         p[i] = np.mean(Z[:,i])
     ax1.clear()
