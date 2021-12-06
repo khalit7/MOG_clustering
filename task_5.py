@@ -34,7 +34,9 @@ X_full = np.zeros((len(f1), 3))
 #########################################
 # Write your code here
 # Store f1 in the first column of X_full, f2 in the second column of X_full and f1+f2 in the third column of X_full
-
+X_full[0:,0] += f1
+X_full[0:,1] += f2 
+X_full[0:,2] += f1+f2
 ########################################/
 X_full = X_full.astype(np.float32)
 
@@ -51,8 +53,8 @@ k = 3
 # The shape of X_phoneme will be two-dimensional. Each row will represent a sample of the dataset, and each column will represent a feature (e.g. f1 or f2 or f1+f2)
 # Fill X_phoneme with the samples of X_full that belong to the chosen phoneme
 # To fill X_phoneme, you can leverage the phoneme_id array, that contains the ID of each sample of X_full
-
-# X_phoneme = ...
+phoneme_indices = np.where(phoneme_id==p_id)[0]
+X_phoneme = X_full[phoneme_indices]
 
 ########################################/
 
@@ -127,7 +129,15 @@ for t in range(n_iter):
         #########################################
         # Write your code here
         # Suggest ways of overcoming the singularity
-
+        # First suggestion: let the covaraince matrix be a diagonal matrix with values sigma (all elements along the diagonal have the same value)
+        '''sigma_square = np.sum(term_1.transpose()@term_1)/N #scaler
+        s[i,:,:] = np.sqrt(sigma_square)*np.identity(D)'''
+        # Second suggestion : let the covariance matrix be a diagonal matrix with different sigma values
+        '''sigma_square = np.sum(np.square(term_1),axis=1) # has shape (D,)
+        sigma_diag = np.diag(np.sqrt(sigma_square))
+        s[i,:,:] = sigma_diag'''
+        # Third suggestion: add a smal positive value to the diagonal of the covariance matrix
+        '''s[i,:,:]+= 0.000001*np.identity(D)'''
         ########################################/
         p[i] = np.mean(Z[:,i])
     ax1.clear()

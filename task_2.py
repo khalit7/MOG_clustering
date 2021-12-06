@@ -51,7 +51,6 @@ p_id = 2
 # The shape of X_phoneme will be two-dimensional. Each row will represent a sample of the dataset, and each column will represent a feature (e.g. f1 or f2)
 # Fill X_phoneme with the samples of X_full that belong to the chosen phoneme
 # To fill X_phoneme, you can leverage the phoneme_id array, that contains the ID of each sample of X_full
-X_phoneme = np.zeros((np.sum(phoneme_id==p_id), 2))
 X_phoneme = X_full[np.where(phoneme_id==p_id)]
 
 ########################################/

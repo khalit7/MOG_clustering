@@ -32,7 +32,8 @@ X_full = np.zeros((len(f1), 2))
 #########################################
 # Write your code here
 # Store f1 in the first column of X_full, and f2 in the second column of X_full
-
+X_full[0:,0] += f1
+X_full[0:,1] += f2 
 ########################################/
 X_full = X_full.astype(np.float32)
 
@@ -47,7 +48,9 @@ k = 3
 # Fill X_phonemes_1_2 with the samples of X_full that belong to the chosen phonemes
 # To fill X_phonemes_1_2, you can leverage the phoneme_id array, that contains the ID of each sample of X_full
 
-# X_phonemes_1_2 = ...
+phoneme_1_indices = np.where(phoneme_id==1)[0]
+phoneme_2_indices = np.where(phoneme_id==2)[0]
+X_phonemes_1_2 =X_full[np.append(phoneme_1_indices,phoneme_2_indices)]
 
 ########################################/
 
@@ -75,7 +78,33 @@ print('f2 range: {}-{} | {} points'.format(min_f2, max_f2, N_f2))
 # Store these prediction in a 2D numpy array named "M", of shape N_f2 x N_f1 (the first dimension is f2 so that we keep f2 in the vertical axis of the plot)
 # M should contain "0.0" in the points that belong to phoneme 1 and "1.0" in the points that belong to phoneme 2
 ########################################/
+grid = []
+f2_values = [*range(min_f2,max_f2)]
+for f1_value in range(min_f1,max_f1):
+    temp = []
+    for f2_value in range(min_f2,max_f2):
+        temp.append([f1_value,f2_value])
+    grid.append(temp)
+grid = np.array(grid)
 
+model_npy_file = 'data/GMM_params_phoneme_0{ph}_k_0{k}.npy'
+model_ph1 =np.ndarray.tolist(np.load(model_npy_file.format(ph=1, k=k), allow_pickle=True))
+model_ph2 =np.ndarray.tolist(np.load(model_npy_file.format(ph=2, k=k), allow_pickle=True))
+ph1_predictions= np.zeros((grid.shape[0],grid.shape[1],k))
+ph2_predictions= np.zeros((grid.shape[0],grid.shape[1],k))
+for i in range(grid.shape[0]):
+    ph1_predictions[i] = get_predictions(model_ph1['mu'], model_ph1['s'], model_ph1['p'], grid[i])
+    ph2_predictions[i] = get_predictions(model_ph2['mu'], model_ph2['s'], model_ph2['p'], grid[i])
+
+
+M= np.zeros((grid.shape[0],grid.shape[1]))
+for i in range(grid.shape[0]):
+    for j in range(grid.shape[1]):
+        if (np.sum(ph1_predictions[i][j])>np.sum(ph2_predictions[i][j])):
+            M[i][j] =1
+        else:
+            M[i][j] = 2
+M=np.transpose(M)
 ################################################
 # Visualize predictions on custom grid
 
