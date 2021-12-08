@@ -1,11 +1,9 @@
 import numpy as np
 import os
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 from print_values import *
 from plot_data_all_phonemes import *
-from plot_data_3D import *
+from plot_data import *
 import random
 from sklearn.preprocessing import normalize
 from get_predictions import *
@@ -29,47 +27,44 @@ phoneme_id = data['phoneme_id']
 f1 = data['f1']
 f2 = data['f2']
 
-# Initialize array containing f1, f2 & f1+f2, of all phonemes.
-X_full = np.zeros((len(f1), 3))
+# Initialize array containing f1 & f2, of all phonemes.
+X_full = np.zeros((len(f1), 2))
 #########################################
 # Write your code here
-# Store f1 in the first column of X_full, f2 in the second column of X_full and f1+f2 in the third column of X_full
+# Store f1 in the first column of X_full, and f2 in the second column of X_full
 X_full[0:,0] += f1
 X_full[0:,1] += f2 
-X_full[0:,2] += f1+f2
 ########################################/
 X_full = X_full.astype(np.float32)
 
 # We will train a GMM with k components, on a selected phoneme id which is stored in variable "p_id" 
 
-# id of the phoneme that will be used (e.g. 1, or 2)
-p_id = 1
 # number of GMM components
-k = 3
+k = 6
+# you can use the p_id variable, to store the ID of the chosen phoneme that will be used (e.g. phoneme 1, or phoneme 2)
+p_id = 2
+
 #########################################
 # Write your code here
 
 # Create an array named "X_phoneme", containing only samples that belong to the chosen phoneme.
-# The shape of X_phoneme will be two-dimensional. Each row will represent a sample of the dataset, and each column will represent a feature (e.g. f1 or f2 or f1+f2)
+# The shape of X_phoneme will be two-dimensional. Each row will represent a sample of the dataset, and each column will represent a feature (e.g. f1 or f2)
 # Fill X_phoneme with the samples of X_full that belong to the chosen phoneme
 # To fill X_phoneme, you can leverage the phoneme_id array, that contains the ID of each sample of X_full
-phoneme_indices = np.where(phoneme_id==p_id)[0]
-X_phoneme = X_full[phoneme_indices]
+X_phoneme = X_full[np.where(phoneme_id==p_id)]
 
 ########################################/
 
-################################################
 # Plot array containing the chosen phoneme
 
 # Create a figure and a subplot
-fig = plt.figure()
-ax1 = plt.axes(projection='3d')
+fig, ax1 = plt.subplots()
 
 title_string = 'Phoneme {}'.format(p_id)
 # plot the samples of the dataset, belonging to the chosen phoneme (f1 & f2, phoneme 1 or 2)
-plot_data_3D(X=X_phoneme, title_string=title_string, ax=ax1)
+plot_data(X=X_phoneme, title_string=title_string, ax=ax1)
 # save the plotted points of phoneme 1 as a figure
-plot_filename = os.path.join(os.getcwd(), 'figures', 'dataset_3D_phoneme_{}.png'.format(p_id))
+plot_filename = os.path.join(os.getcwd(), 'figures', 'dataset_phoneme_{}.png'.format(p_id))
 plt.savefig(plot_filename)
 
 ################################################
@@ -77,7 +72,6 @@ plt.savefig(plot_filename)
 
 # as dataset X, we will use only the samples of the chosen phoneme
 X = X_phoneme.copy()
-
 # get number of samples
 N = X.shape[0]
 # get dimensionality of our dataset
@@ -92,7 +86,7 @@ mu = X[random_indices,:] # shape kxD
 # covariance matrices
 s = np.zeros((k,D,D)) # shape kxDxD
 # number of iterations for the EM algorithm
-n_iter = 150
+n_iter = 100
 
 # initialize covariances
 for i in range(k):
@@ -106,7 +100,6 @@ Z = np.zeros((N,k)) # shape Nxk
 ###############################
 # run Expectation Maximization algorithm for n_iter iterations
 for t in range(n_iter):
-    #print('****************************************')
     print('Iteration {:03}/{:03}'.format(t+1, n_iter))
 
     # Do the E-step
@@ -115,49 +108,48 @@ for t in range(n_iter):
 
     # Do the M-step:
     for i in range(k):
-        mu[i,:] = np.matmul(X.transpose(), Z[:,i])/np.sum(Z[:,i])
-        
-        ###################################################
-        # We will fit Gaussians with full covariance matrices:
+        mu[i,:] = np.matmul(X.transpose(),Z[:,i]) / np.sum(Z[:,i])
+        # We will fit Gaussians with diagonal covariance matrices
         mu_i = mu[i,:]
         mu_i = np.expand_dims(mu_i, axis=1)
         mu_i_repeated = np.repeat(mu_i, N, axis=1)
-
-        term_1 = X.transpose() - mu_i_repeated
-        term_2 = np.repeat(np.expand_dims(Z[:,i], axis=1), D, axis=1) * term_1.transpose()
-        s[i,:,:] = np.matmul(term_1, term_2)/np.sum(Z[:,i])
-        #########################################
-        # Write your code here
-        # Suggest ways of overcoming the singularity
-        # First suggestion: let the covaraince matrix be a diagonal matrix with values sigma (all elements along the diagonal have the same value which is the sum of all variances)
-        # sigma_square = np.sum(np.square(term_1))/(N) #scaler. this is a "not very obvious" way of calculating the sigma^2 using the equation in the lecture slides. However, it produces the same result and its faster to compute (since it is a vectorized implementation)
-        # s[i,:,:] = (sigma_square)*np.identity(D)
-        # Second suggestion : let the covariance matrix be a diagonal matrix with different sigma values (the sigma matrix will be the variance of every dimention)
-        # sigma_square = np.sum(np.square(term_1),axis=1) /N# has shape (D,)
-        # sigma_diag = np.diag((sigma_square))
-        # s[i,:,:] = sigma_diag
-        # Third suggestion: add a smal positive value to the diagonal of the covariance matrix
-        s[i,:,:]+= 1000*np.identity(D)
-        ########################################/
+        X_minus_mu = (X.transpose() - mu_i_repeated)**2
+        res_1 = np.squeeze( np.matmul(X_minus_mu, np.expand_dims(Z[:,i], axis=1)))/np.sum(Z[:,i])
+        s[i,:,:] = np.diag(res_1)
         p[i] = np.mean(Z[:,i])
     ax1.clear()
-    # plot the samples of the dataset, belonging to the chosen phoneme (f1, f2, f1+f2 | phoneme 1 or 2)
-    plot_data_3D(X=X, title_string=title_string, ax=ax1)
+    # plot the samples of the dataset, belonging to the chosen phoneme (f1 & f2, phoneme 1 or 2)
+    plot_data(X=X_phoneme, title_string=title_string, ax=ax1)
     # Plot gaussians after each iteration
     plot_gaussians(ax1, 2*s, mu)
 print('\nFinished.\n')
 
+# save the trained GMM's plot as a figure
+plot_filename = os.path.join(os.getcwd(), 'figures', 'GMM_phoneme_{}_k_{}.png'.format(p_id, k))
+plt.savefig(plot_filename)
+
 print('Implemented GMM | Mean values')
 for i in range(k):
     print(mu[i])
+print('')
 print('Implemented GMM | Covariances')
 for i in range(k):
     print(s[i,:,:])
+print('')
 print('Implemented GMM | Weights')
 print(p)
 print('')
-plot_filename = os.path.join(os.getcwd(), 'figures', 'fixing_singularity.png')
-plt.savefig(plot_filename)
+
 # enter non-interactive mode of matplotlib, to keep figures open
 plt.ioff()
 plt.show()
+
+# Create a dictionary to store the trained GMM's parameters
+GMM_parameters = {}
+GMM_parameters['mu'] = mu
+GMM_parameters['s'] = s
+GMM_parameters['p'] = p
+
+# Save the trained GMM's parameters in a numpy file
+npy_filename = 'data/GMM_params_phoneme_{:02}_k_{:02}.npy'.format(p_id, k)
+np.save(npy_filename, GMM_parameters)
